@@ -1,20 +1,9 @@
 const router = require("express").Router();
 const { validateStudent, studentModel } = require("../models/studentModel");
-const multer = require("multer");
 const _ = require("lodash");
-const fs = require("fs");
-
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, "./uploads/")
-    },
-    filename: function (req, file, cb) {
-
-        cb(null, new Date().toDateString() + file.originalname)
-    }
-});
-
-const upload = multer({ storage });
+const deleteImage = require("../middlewares/deleteImage") ; 
+const auth = require("../middlewares/auth") ; 
+const {upload} = require("../middlewares/uploadImage") ; 
 
 router.get("/", async (req, res) => {
     try {
@@ -30,13 +19,13 @@ router.get("/:id", async (req, res) =>{
 
 }) ; 
 
-router.post("/", upload.single("wow"), async (req, res) => {
+router.post("/", [auth , upload.single("student")] , async (req, res) => {
 
     const { error } = validateStudent(req.body, req.file);
     if (error)
     {
         if(req.file)
-            deleteStudentImage("http://localhost:3000/uploads/" + req.file.filename) ;
+            deleteImage("http://localhost:3000/uploads/" + req.file.filename) ;
         return res.status(400).send(error.details[0].message);
     } 
 
@@ -55,7 +44,7 @@ router.post("/", upload.single("wow"), async (req, res) => {
         res.send(student);
     }
     catch (err) {
-        deleteStudentImage(imageURI);
+        deleteImage(imageURI);
         res.status(500).send(err);
     }
 
@@ -66,13 +55,13 @@ router.put("/:id" , async(req ,res)=>{
 
 });
 
-router.delete("/:id" , async( req , res )=>{
+router.delete("/:id" , auth , async( req , res )=>{
 
     try{
         const student = await studentModel.findByIdAndDelete(req.params.id) ;
         if( !student ) return res.status(404).send("student not found") ;  
 
-        deleteStudentImage( student.imageURI ) ; 
+        deleteImage( student.imageURI ) ;
         res.send(student);
     }
     catch(err){
@@ -80,15 +69,5 @@ router.delete("/:id" , async( req , res )=>{
     }
 
 });
-
-
-function deleteStudentImage(uri) {
-    let imageName = uri.split("uploads/")[1];
-    fs.unlink( "./uploads/"+imageName , (err) => {
-        if (err)
-            return err
-        return true ;
-    });
-}
 
 module.exports = router; 

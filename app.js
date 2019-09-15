@@ -2,6 +2,7 @@ const express = require("express") ;
 const mongoose = require("mongoose") ; 
 
 const studnet = require("./routes/student") ; 
+const manager = require("./routes/manager") ; 
 
 const app = express() ; 
 
@@ -16,7 +17,7 @@ app.use('/uploads' , express.static('./uploads') );
 
 // Routes
 app.use("/api/student" ,  studnet ) ; 
-
+app.use("/api/manager" ,  manager ) ; 
 
 
 
